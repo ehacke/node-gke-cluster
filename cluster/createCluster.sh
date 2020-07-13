@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+gcloud beta container --project "asserted-dev" clusters create "dev-cluster" \
+    --zone "us-central1-c" \
+    --no-enable-basic-auth \
+    --release-channel "regular" \
+    --machine-type "e2-small" \
+    --image-type "COS" \
+    --disk-type "pd-ssd" \
+    --disk-size "10" \
+    --metadata disable-legacy-endpoints=true \
+    --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" \
+    --preemptible --num-nodes "3" \
+    --enable-stackdriver-kubernetes \
+    --enable-ip-alias \
+    --network "projects/asserted-dev/global/networks/default" \
+    --subnetwork "projects/asserted-dev/regions/us-central1/subnetworks/default" \
+    --default-max-pods-per-node "110" \
+    --enable-autoscaling --min-nodes "3" --max-nodes "9" \
+    --no-enable-master-authorized-networks \
+    --addons HorizontalPodAutoscaling,HttpLoadBalancing,NodeLocalDNS \
+    --enable-autoupgrade \
+    --enable-autorepair \
+    --max-surge-upgrade 1 \
+    --max-unavailable-upgrade 0 \
+    --autoscaling-profile optimize-utilization \
+    --database-encryption-key "projects/asserted-dev/locations/us-central1/keyRings/us-c-gke-ring/cryptoKeys/dev-secrets" \
+    --enable-vertical-pod-autoscaling \
+    --enable-shielded-nodes \
+    --shielded-secure-boot
+
+
+gcloud beta container --project "asserted-dev" clusters create "dev-cluster" \
+    --region "us-central1" \
+    --no-enable-basic-auth \
+    --release-channel "regular" \
+    --machine-type "e2-small" \
+    --image-type "COS" \
+    --disk-type "pd-ssd" \
+    --disk-size "10" \
+    --metadata disable-legacy-endpoints=true \
+    --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" \
+    --preemptible \
+    --num-nodes "1" \
+    --enable-stackdriver-kubernetes \
+    --enable-ip-alias \
+    --network "projects/asserted-dev/global/networks/default" \
+    --subnetwork "projects/asserted-dev/regions/us-central1/subnetworks/default" \
+    --default-max-pods-per-node "110" \
+    --enable-autoscaling \
+    --min-nodes "1" \
+    --max-nodes "3" \
+    --no-enable-master-authorized-networks \
+    --addons HorizontalPodAutoscaling,HttpLoadBalancing,NodeLocalDNS \
+    --enable-autoupgrade \
+    --enable-autorepair \
+    --max-surge-upgrade 1 \
+    --max-unavailable-upgrade 0 \
+    --autoscaling-profile optimize-utilization \
+    --database-encryption-key "projects/asserted-dev/locations/us-central1/keyRings/us-c-gke-ring/cryptoKeys/dev-secrets" \
+    --enable-vertical-pod-autoscaling \
+    --enable-shielded-nodes \
+    --shielded-secure-boot

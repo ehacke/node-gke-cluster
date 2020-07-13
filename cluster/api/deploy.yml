@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    application: api
+    component: api
+  name: api
+  namespace: final-space
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      application: api
+      component: api
+  strategy:
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      namespace: final-space
+      labels:
+        application: api
+        component: api
+        redeploy: '1'
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-preemptible: "true"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: application
+                      operator: In
+                      values:
+                        - api
+                    - key: component
+                      operator: In
+                      values:
+                        - api
+                topologyKey: kubernetes.io/hostname
+      containers:
+      - envFrom:
+          - configMapRef:
+              name: api-env
+        image: gcr.io/asserted/api:7.0.13
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /v1/health
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /v1/health
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - mountPath: /etc/keys/service-key
+          name: service-key
+          readOnly: true
+        - mountPath: /etc/keys/sendgrid-key
+          name: sendgrid-key
+          readOnly: true
+        - mountPath: /etc/keys/stripe-key
+          name: stripe-key
+          readOnly: true
+        - mountPath: /etc/keys/stripe-webhook-secret
+          name: stripe-webhook-secret
+          readOnly: true
+        - mountPath: /etc/keys/one-time-key
+          name: one-time-key
+          readOnly: true
+        - mountPath: /etc/keys/unsub-key
+          name: unsub-key
+          readOnly: true
+        - mountPath: /etc/keys/twilio-sid
+          name: twilio-sid
+          readOnly: true
+        - mountPath: /etc/keys/twilio-token
+          name: twilio-token
+          readOnly: true
+        name: api
+        ports:
+        - name: api
+          containerPort: 9000
+          protocol: TCP
+      volumes:
+      - name: service-key
+        secret:
+          secretName: service-key
+      - name: unsub-key
+        secret:
+          secretName: unsub-key
+      - name: sendgrid-key
+        secret:
+          secretName: sendgrid-key
+      - name: stripe-key
+        secret:
+          secretName: stripe-key
+      - name: stripe-webhook-secret
+        secret:
+          secretName: stripe-webhook-secret
+      - name: one-time-key
+        secret:
+          secretName: one-time-key
+      - name: twilio-sid
+        secret:
+          secretName: twilio-sid
+      - name: twilio-token
+        secret:
+          secretName: twilio-token
