@@ -6,3 +6,4 @@ metadata:
 data:
   REDIS_HOST: redis
   REDIS_PORT: '6379'
+  PORT: 9000

@@ -7,12 +7,12 @@ const getenv = require('getenv');
 const os = require('os');
 
 const app = express();
-const port = 3000;
+const port = getenv('PORT');
 
 const server = http.createServer(app);
 
 app.use(express.static('public'));
-app.get('/', (req, res) => res.send('Hello World!'));
+app.get('/health', (req, res) => res.send('Healthy'));
 
 const io = socketio(server);
 

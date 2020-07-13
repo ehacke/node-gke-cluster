@@ -45,17 +45,17 @@ spec:
       - envFrom:
           - configMapRef:
               name: api-env
-        image: gcr.io/asserted/api:7.0.13
+        image: ehacke/mock-api:2865e54
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
-            path: /v1/health
+            path: /health
             port: 9000
           initialDelaySeconds: 10
           periodSeconds: 5
         readinessProbe:
           httpGet:
-            path: /v1/health
+            path: /health
             port: 9000
           initialDelaySeconds: 10
           periodSeconds: 5
