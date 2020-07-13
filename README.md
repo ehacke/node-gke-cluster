@@ -106,28 +106,81 @@ const getenv = require('getenv');
 const os = require('os');
 
 const app = express();
-const port = 3000;
+const port = getenv('PORT');
 
 const server = http.createServer(app);
 
+// Serve static files for simple UI
 app.use(express.static('public'));
-app.get('/', (req, res) => res.send('Hello World!'));
+
+// Health check endpoint
+app.get('/health', (req, res) => res.send('Healthy'));
 
 const io = socketio(server);
 
-// Handling multiple nodes: https://socket.io/docs/using-multiple-nodes/
+// Handling multiple nodes: https://socket.io/docs/using-multiple-nodes/ by using redis pubsub to broadcast events
 io.adapter(socketRedis({ host: getenv('REDIS_HOST'), port: getenv('REDIS_PORT') }));
+
+// Socket emit
 io.on('connection', (socket) => socket.emit('hostname', os.hostname()));
 
+// Start server
 server.listen(port, () => console.log(`app listening at http://localhost:${port}`));
 
 // Handle SIGINT or SIGTERM and drain connections
 gracefulShutdown(server);
 ```
 
- 
+## Deploying Redis
+
+Redis is only included as an in-cluster deployment for the purposes of this example. It's likely that in a production environment, if Redis is required, you likely wouldn't want it on a preemptible instance.
+
+A better choice is to use a node selector or node affinity to deploy it onto a non-preemptible VM, or even just substitute with Redis Memorystore if the budget allows.
+
+```bash
+kubectl apply -f cluster/redis
+```
 
 ## Deploying the API
+
+### Namespace
+
+Create the namespace first.
+
+```bash
+kubectl apply -f cluster/namespace.yml
+```
+
+### ConfigMap, Deployment, and Service
+
+The configMap, deployment, and service are mostly pretty standard, but I'll highlight the important details.
+
+The `deploy.yml` specifies pod anti-affinity to spread the API pods as widely as possible across the nodes.
+
+```yaml
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: application
+                  operator: In
+                  values:
+                    - api
+                - key: component
+                  operator: In
+                  values:
+                    - api
+            topologyKey: kubernetes.io/hostname 
+``` 
+
+```bash
+kubectl apply -f cluster/api/configMap.yml
+kubectl apply -f cluster/api/deploy.yml
+kubectl apply -f cluster/api/service.yml
+```
 
 ## Creating the IP
 

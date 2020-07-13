@@ -12,4 +12,4 @@ RUN npm install --production
 
 COPY index.js .
 
-CMD ["node", "node.js"]
+CMD ["node", "index.js"]
