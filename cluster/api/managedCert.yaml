@@ -1,8 +1,8 @@
 apiVersion: networking.gke.io/v1beta1
 kind: ManagedCertificate
 metadata:
-  name: prod-api-certificate
+  name: api-certificate
   namespace: final-space
 spec:
   domains:
-    - api.asserted.io
+    - test-api.asserted.io

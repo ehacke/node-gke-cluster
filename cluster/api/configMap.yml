@@ -4,7 +4,5 @@ metadata:
   name: api-env
   namespace: final-space
 data:
-  SERVICE_ACCOUNT_PATH: /etc/keys/service-key/cluster-api.json
-  CACHE_REDIS_HOST: '10.105.231.112'
-  CACHE_REDIS_PORT: '6379'
-  DEPS_BUCKET_NAME: final-space-dependencies
+  REDIS_HOST: redis
+  REDIS_PORT: '6379'

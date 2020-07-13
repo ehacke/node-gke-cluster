@@ -1,12 +1,12 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: prod-api-ingress
+  name: api-ingress
   namespace: final-space
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: prod-v2-api-ip
-    networking.gke.io/managed-certificates: prod-api-certificate
-    nginx.org/websocket-services: "api"
+    nginx.org/websocket-services: api
+    kubernetes.io/ingress.global-static-ip-name: test-api-ip
+    networking.gke.io/managed-certificates: api-certificate
 spec:
   backend:
     serviceName: api

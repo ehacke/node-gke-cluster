@@ -1,0 +1,24 @@
+{
+  "name": "@ehacke/mock-api",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "docker:down": "COMPOSE_PROJECT_NAME=local docker-compose down --remove-orphans",
+    "docker:restart": "npm run docker:down && npm run docker:up",
+    "docker:up": "COMPOSE_PROJECT_NAME=local docker-compose up -d",
+    "local": "npm run docker:up && node -r dotenv/config index.js"
+  },
+  "author": "Eric Hacke",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "getenv": "^1.0.0",
+    "http-graceful-shutdown": "^2.3.2",
+    "socket.io": "^2.3.0",
+    "socket.io-redis": "^5.3.0"
+  },
+  "devDependencies": {
+    "dotenv": "^8.2.0"
+  }
+}
