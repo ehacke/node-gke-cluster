@@ -36,14 +36,11 @@ NAME=$(cat package.json | jq .name -r | sed -e 's/@ehacke\///g')
 docker pull node:latest
 
 suffix=$(git rev-parse --short HEAD)
-suffix="-${suffix}"
 
 latestTag="ehacke/${NAME}:latest"
 tag="ehacke/${NAME}:${suffix}"
 
 echo "Building and pushing ${tag}"
-
-NODE_ENV=production npm run build
 
 docker build -t ${tag} -t ${latestTag} .
 docker push ${tag}
