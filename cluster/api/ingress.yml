@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: final-space
+  annotations:
+    nginx.org/websocket-services: api
+    kubernetes.io/ingress.global-static-ip-name: test-api-ip
+    networking.gke.io/managed-certificates: api-certificate
+    cloud.google.com/backend-config: '{"default": "api-backend"}'
+spec:
+  backend:
+    serviceName: api
+    servicePort: 80

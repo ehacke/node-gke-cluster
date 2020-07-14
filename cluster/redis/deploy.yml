@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: final-space
+  labels:
+    application: api
+    component: redis
+    type: single
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: api
+      component: redis
+      type: single
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      namespace: final-space
+      labels:
+        application: api
+        component: redis
+        type: single
+    spec:
+      containers:
+        - image: ehacke/redis:5.0
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "cd / && ./healthCheck.sh"
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "cd / && ./healthCheck.sh"
+            initialDelaySeconds: 1
+            periodSeconds: 1
+          name: redis
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 6379
+              name: http
+              protocol: TCP
+          env:
+            - name: MAX_MEM_BYTES
+              value: 150m

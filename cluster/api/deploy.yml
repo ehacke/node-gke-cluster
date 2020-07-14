@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    application: api
+    component: api
+  name: api
+  namespace: final-space
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      application: api
+      component: api
+  strategy:
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      namespace: final-space
+      labels:
+        application: api
+        component: api
+        redeploy: '1'
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: application
+                      operator: In
+                      values:
+                        - api
+                    - key: component
+                      operator: In
+                      values:
+                        - api
+                topologyKey: kubernetes.io/hostname
+      containers:
+      - envFrom:
+          - configMapRef:
+              name: api-env
+        image: ehacke/mock-api:03d5a89
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        name: api
+        ports:
+        - name: api
+          containerPort: 9000
+          protocol: TCP
