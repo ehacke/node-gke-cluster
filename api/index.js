@@ -14,6 +14,9 @@ const server = http.createServer(app);
 // Serve static files for simple UI
 app.use(express.static('public'));
 
+// Not really necessary for this example, but this ensures the request IP matches the client and not the load-balancer
+app.enable('trust proxy');
+
 // Health check endpoint
 app.get('/health', (req, res) => res.send('Healthy'));
 

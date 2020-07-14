@@ -1,4 +1,4 @@
-# A Cheap Kubernetes Cluster for Node with Socket.io
+# A Cheap Kubernetes Cluster for Node with Socket.io and automatic SSL
 
 As a disclaimer, I'm not claiming this is a perfect fit for everyone. Different applications have different technical 
 requirements, and different uptime or availability standards. But I aim to outline the basics for an inexpensive GKE 
@@ -106,19 +106,22 @@ const getenv = require('getenv');
 const os = require('os');
 
 const app = express();
-const port = getenv('PORT');
+const port = getenv.int('PORT');
 
 const server = http.createServer(app);
 
 // Serve static files for simple UI
 app.use(express.static('public'));
 
+// Not really necessary for this example, but this ensures the request IP matches the client and not the load-balancer
+app.enable('trust proxy');
+
 // Health check endpoint
 app.get('/health', (req, res) => res.send('Healthy'));
 
 const io = socketio(server);
 
-// Handling multiple nodes: https://socket.io/docs/using-multiple-nodes/ by using redis pubsub to broadcast events
+// Handling multiple nodes: https://socket.io/docs/using-multiple-nodes/
 io.adapter(socketRedis({ host: getenv('REDIS_HOST'), port: getenv('REDIS_PORT') }));
 
 // Socket emit
@@ -129,6 +132,14 @@ server.listen(port, () => console.log(`app listening at http://localhost:${port}
 
 // Handle SIGINT or SIGTERM and drain connections
 gracefulShutdown(server);
+```
+
+## Namespace
+
+Create the namespace first, otherwise everything else will fail.
+
+```bash
+kubectl apply -f cluster/namespace.yml
 ```
 
 ## Deploying Redis
@@ -143,15 +154,66 @@ kubectl apply -f cluster/redis
 
 ## Deploying the API
 
-### Namespace
+## BackendConfig
 
-Create the namespace first.
+The BackendConfig is a less widely documented configuration option in GKE, but it's essential to making websockets load-balance correctly across multiple nodes.
 
-```bash
-kubectl apply -f cluster/namespace.yml
+The BackendConfig itself looks like this:
+
+```yaml
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: api-backend
+  namespace: final-space
+spec:
+  connectionDraining:
+    drainingTimeoutSec: 60
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
 ```
 
-### ConfigMap, Deployment, and Service
+This configures the load balancer to have session stickyness based on IP so that connections are not constantly round-robined to every API pod. Without that, socket.io won't be able to maintain a connection while polling.
+
+The connectionDraining option just increases the amount of time allowed to drain connections as new API pods are deployed. The default is 0, which can cause connections to be severed early.
+
+This BackendConfig is then referenced in both the ingress.yml and the service.yml.
+
+## Service
+
+The service creates an external load balancer that connects to each API pod.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  labels:
+    application: api
+    component: api
+  namespace: final-space
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+    beta.cloud.google.com/backend-config: '{"ports": {"80":"api-backend"}}'
+spec:
+  type: LoadBalancer
+  sessionAffinity: ClientIP
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 9000
+  selector:
+    application: api
+    component: api
+```
+
+The important extra details in this case are the annotations, and sessionAffinity.
+
+The 
+
+https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#configuring_ingress_features_through_backendconfig_parameters
+
+### BackendConfig, ConfigMap, Deployment, and Service
 
 The configMap, deployment, and service are mostly pretty standard, but I'll highlight the important details.
 
@@ -178,6 +240,7 @@ The `deploy.yml` specifies pod anti-affinity to spread the API pods as widely as
 
 ```bash
 kubectl apply -f cluster/api/configMap.yml
+kubectl apply -f cluster/api/backend.yml
 kubectl apply -f cluster/api/deploy.yml
 kubectl apply -f cluster/api/service.yml
 ```
