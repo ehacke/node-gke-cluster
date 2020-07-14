@@ -184,4 +184,26 @@ kubectl apply -f cluster/api/service.yml
 
 ## Creating the IP
 
-https://cloud.google.com/kubernetes-engine/docs/tutorials/http-balancer
+Create a public external IP to bind to the ingress
+
+```bash
+gcloud compute addresses create test-api-ip --global
+```
+
+Configure your DNS provider to point to the IP.
+
+## Create ingress and managed certificate
+
+```bash
+kubectl apply -f cluster/api/managedCert.yml
+kubectl apply -f cluster/api/ingress.yml
+```
+
+It'll take up to 20 minutes to create the managed certificate. You can monitor the cert creation and the ingress creation with the following:
+
+```bash
+watch kubectl describe ManagedCertificate
+watch kubectl get ingress
+```
+
+## 
